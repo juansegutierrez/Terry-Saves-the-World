@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terry Saves the World - v0.1.5 (Story Update)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terry Saves the World - Mobile Edition</title>
     <style>
         /* CSS: The "Office Aesthetic" Stylesheet */
         :root {
@@ -24,25 +24,25 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            user-select: none; /* No selecting text, get back to work */
+            user-select: none;
+            touch-action: none; /* Prevent browser zooming/scrolling */
         }
 
-        /* The Main Application Container */
         #app-container {
             width: 100%;
             max-width: 500px;
+            height: 100vh;
+            max-height: 800px;
             background-color: var(--win-gray);
-            border-top: 2px solid var(--win-white);
-            border-left: 2px solid var(--win-white);
-            border-right: 2px solid var(--win-black);
-            border-bottom: 2px solid var(--win-black);
+            border: 2px solid var(--win-white);
             box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
             padding: 4px;
+            box-sizing: border-box;
         }
 
-        /* The Title Bar */
+        /* Title Bar */
         .title-bar {
             background-color: var(--win-blue);
             color: var(--win-white);
@@ -53,52 +53,59 @@
             font-weight: bold;
             letter-spacing: 1px;
             margin-bottom: 8px;
+            flex-shrink: 0;
         }
 
         .title-btn {
             background: var(--win-gray);
             color: black;
             border: 1px outset white;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             text-align: center;
-            line-height: 18px;
-            font-size: 14px;
+            line-height: 22px;
             cursor: pointer;
         }
 
-        /* Dialogue Section (The "Narrative Interface") */
+        /* Dialogue Section */
         #dialogue-area {
             background: white;
             border: 2px inset var(--win-dark);
-            height: 80px;
-            padding: 10px;
+            height: 60px;
+            padding: 8px;
             margin-bottom: 10px;
-            font-size: 14px;
-            line-height: 1.4;
+            font-size: 13px;
+            line-height: 1.3;
             overflow-y: auto;
             color: black;
+            flex-shrink: 0;
         }
 
         .speaker-zeke { color: #800000; font-weight: bold; }
         .speaker-terry { color: #000080; font-weight: bold; }
         .speaker-sys { color: #008000; font-weight: bold; }
 
-        /* The Canvas Container */
+        /* Canvas Wrapper */
         #canvas-wrapper {
+            flex-grow: 1;
             display: flex;
             justify-content: center;
+            align-items: center;
             background-color: var(--win-gray);
             border: 3px groove var(--win-white);
-            padding: 10px;
+            padding: 5px;
+            overflow: hidden;
+            position: relative;
         }
 
         canvas {
-            cursor: crosshair; /* Precision clicking required */
             background-color: #c0c0c0;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
         }
 
-        /* Status Bar at the bottom */
+        /* Status Bar */
         .status-bar {
             margin-top: 8px;
             border-top: 1px solid var(--win-dark);
@@ -107,14 +114,35 @@
             font-size: 12px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            background: var(--win-gray);
         }
 
-        /* Controls hint */
-        .controls-hint {
-            text-align: center;
-            font-size: 10px;
-            color: #555;
+        /* Mobile Controls */
+        .mobile-controls {
+            display: flex;
+            gap: 10px;
             margin-top: 5px;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .mode-btn {
+            background: var(--win-gray);
+            border: 2px outset var(--win-white);
+            padding: 8px 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            width: 120px;
+        }
+        
+        .mode-btn.active {
+            background: #e0e0e0;
+            border: 2px inset var(--win-dark);
+            color: #000080;
         }
 
         .credits {
@@ -123,7 +151,6 @@
             color: #555;
             margin-top: 2px;
             font-style: italic;
-            padding-right: 4px;
         }
     </style>
 </head>
@@ -132,37 +159,39 @@
     <div id="app-container">
         <!-- Title Bar -->
         <div class="title-bar">
-            <span>TERRY_SAVES_WORLD.EXE</span>
+            <span>TERRY_SAVES_WORLD</span>
             <div class="title-btn" onclick="game.reset()">R</div>
         </div>
 
         <!-- Narrative Output -->
         <div id="dialogue-area">
-            <span class="speaker-sys">SYSTEM:</span> "Booting OfficeOS v3.1... Click screen to acknowledge memo."
+            <span class="speaker-sys">SYSTEM:</span> "Initializing mobile interface... Touch screen to punch in."
         </div>
 
-        <!-- The Game Viewport -->
+        <!-- Game Viewport -->
         <div id="canvas-wrapper">
-            <canvas id="gameCanvas" width="400" height="400"></canvas>
+            <canvas id="gameCanvas" width="600" height="600"></canvas>
+        </div>
+
+        <!-- Mobile-Friendly Controls -->
+        <div class="mobile-controls">
+            <button id="mode-toggle" class="mode-btn" onclick="game.toggleMode()">MODE: DISARM</button>
         </div>
 
         <!-- Status & Stats -->
         <div class="status-bar">
+            <span id="level-display">LVL: 1/3</span>
             <span id="mines-left">HAZARDS: --</span>
-            <span id="coffee-level">COFFEE: LUKEWARM</span>
         </div>
         
-        <div class="controls-hint">
-            LEFT CLICK: Disarm | RIGHT CLICK: File HR Report (Flag)
-        </div>
-        <div class="credits">A game by Juan S. Gutierrez</div>
+        <div class="credits">Tap to Interact | A game by Juan S. Gutierrez.</div>
     </div>
 
 <script>
 /**
- * TERRY SAVES THE WORLD - CORE ENGINE
- * Author: Bob (Lead Dev / Coffee Enthusiast)
- * Version: 0.9.5 (Story Update)
+ * TERRY SAVES THE WORLD - V2.0 (Mobile & Levels)
+ * Lead Dev: Bob
+ * Patch Notes: Added touch support, level scaling, and victory confetti.
  */
 
 class GameEngine {
@@ -171,31 +200,60 @@ class GameEngine {
         this.ctx = this.canvas.getContext('2d');
         this.dialogueEl = document.getElementById('dialogue-area');
         this.minesLeftEl = document.getElementById('mines-left');
+        this.levelDisplayEl = document.getElementById('level-display');
+        this.modeBtn = document.getElementById('mode-toggle');
         
-        // Configuration
-        this.GRID_SIZE = 8;
-        this.TOTAL_MINES = 10;
-        this.CELL_SIZE = this.canvas.width / this.GRID_SIZE;
-        
-        // Assets (Colors for numbers)
-        this.colors = [
-            null, 
-            'blue', 'green', 'red', 'purple', 
-            'maroon', 'turquoise', 'black', 'gray'
+        // Level Configuration
+        this.levels = [
+            { level: 1, size: 8, mines: 10, name: "CUBICLE", zekeIntro: "Pathetic. You can't even clear your own desk." },
+            { level: 2, size: 10, mines: 18, name: "BREAKROOM", zekeIntro: "I've booby-trapped the donuts, Terry! Give up!" },
+            { level: 3, size: 12, mines: 30, name: "MOTHERSHIP", zekeIntro: "Welcome to my office. The gravity is weird and the rent is terrible." }
         ];
+        
+        this.currentLevelIdx = 0;
+        this.colors = [null, 'blue', 'green', 'red', 'purple', 'maroon', 'turquoise', 'black', 'gray'];
 
-        // Game State
+        // State
         this.grid = [];
-        this.gameState = 'INTRO'; // INTRO, PLAYING, GAMEOVER
+        this.gameState = 'INTRO'; // INTRO, PLAYING, LEVEL_COMPLETE, VICTORY, GAMEOVER
         this.firstClick = true;
         this.flagsPlaced = 0;
+        this.inputMode = 'DISARM'; // 'DISARM' or 'FLAG'
+        this.confettiParticles = [];
+        this.animationFrameId = null;
 
-        // Bind Inputs
-        this.canvas.addEventListener('mousedown', (e) => this.handleInput(e));
-        this.canvas.addEventListener('contextmenu', (e) => e.preventDefault()); // Block default menu
+        // Input Bindings
+        this.setupInputs();
 
         // Start
         this.startIntro();
+    }
+
+    setupInputs() {
+        // Mouse
+        this.canvas.addEventListener('mousedown', (e) => this.handleMouse(e));
+        this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Touch
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Prevent scrolling
+            const touch = e.touches[0];
+            const rect = this.canvas.getBoundingClientRect();
+            // Simulate mouse event structure
+            this.handleInput(touch.clientX, touch.clientY, false);
+        }, { passive: false });
+    }
+
+    toggleMode() {
+        if (this.inputMode === 'DISARM') {
+            this.inputMode = 'FLAG';
+            this.modeBtn.innerText = "MODE: FLAG";
+            this.modeBtn.classList.add('active');
+        } else {
+            this.inputMode = 'DISARM';
+            this.modeBtn.innerText = "MODE: DISARM";
+            this.modeBtn.classList.remove('active');
+        }
     }
 
     // --- STATE MANAGEMENT ---
@@ -203,17 +261,29 @@ class GameEngine {
     startIntro() {
         this.gameState = 'INTRO';
         this.drawIntro();
-        this.updateDialogue("SYSTEM", "New message from MANAGEMENT. Please review immediately.");
+        this.updateDialogue("SYSTEM", "Tap screen to clock in. Don't be late.");
     }
 
-    startGame() {
+    startLevel(levelIdx) {
+        this.currentLevelIdx = levelIdx;
+        const config = this.levels[this.currentLevelIdx];
+        
+        this.GRID_SIZE = config.size;
+        this.TOTAL_MINES = config.mines;
+        // Adjust cell size to fit the fixed canvas 600x600
+        this.CELL_SIZE = this.canvas.width / this.GRID_SIZE;
+
         this.gameState = 'PLAYING';
         this.grid = [];
         this.firstClick = true;
         this.flagsPlaced = 0;
-        this.updateDialogue("Zeke", "Prepare for annihilation, office drone! These mines are tax-deductible!");
+        this.confettiParticles = []; // Clear confetti
+        cancelAnimationFrame(this.animationFrameId);
+
+        this.levelDisplayEl.innerText = `LVL: ${config.level}/3 - ${config.name}`;
+        this.updateDialogue("Zeke", config.zekeIntro);
         
-        // Initialize empty grid
+        // Initialize Grid
         for (let r = 0; r < this.GRID_SIZE; r++) {
             let row = [];
             for (let c = 0; c < this.GRID_SIZE; c++) {
@@ -238,7 +308,6 @@ class GameEngine {
             let r = Math.floor(Math.random() * this.GRID_SIZE);
             let c = Math.floor(Math.random() * this.GRID_SIZE);
 
-            // Don't place mine on existing mine OR the first clicked cell
             if (!this.grid[r][c].isMine && (r !== excludeR || c !== excludeC)) {
                 this.grid[r][c].isMine = true;
                 mines++;
@@ -251,13 +320,10 @@ class GameEngine {
         for (let r = 0; r < this.GRID_SIZE; r++) {
             for (let c = 0; c < this.GRID_SIZE; c++) {
                 if (this.grid[r][c].isMine) continue;
-                
                 let count = 0;
-                // Check 8 neighbors
                 for (let i = -1; i <= 1; i++) {
                     for (let j = -1; j <= 1; j++) {
-                        let nr = r + i;
-                        let nc = c + j;
+                        let nr = r + i, nc = c + j;
                         if (nr >= 0 && nr < this.GRID_SIZE && nc >= 0 && nc < this.GRID_SIZE) {
                             if (this.grid[nr][nc].isMine) count++;
                         }
@@ -270,30 +336,45 @@ class GameEngine {
 
     // --- INPUT HANDLING ---
 
-    handleInput(e) {
+    handleMouse(e) {
+        if (e.button === 2) { // Right Click always flags
+            this.handleInput(e.clientX, e.clientY, true);
+        } else {
+            this.handleInput(e.clientX, e.clientY, false);
+        }
+    }
+
+    handleInput(clientX, clientY, isRightClick) {
         if (this.gameState === 'INTRO') {
-            this.startGame();
+            this.startLevel(0);
             return;
         }
 
-        if (this.gameState === 'GAMEOVER') return;
+        if (this.gameState === 'LEVEL_COMPLETE') {
+            this.startLevel(this.currentLevelIdx + 1);
+            return;
+        }
+
+        if (this.gameState === 'GAMEOVER' || this.gameState === 'VICTORY') return;
 
         const rect = this.canvas.getBoundingClientRect();
+        // Calculate scaling factor between CSS pixels and Canvas pixels
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
 
-        const x = (e.clientX - rect.left) * scaleX;
-        const y = (e.clientY - rect.top) * scaleY;
+        const x = (clientX - rect.left) * scaleX;
+        const y = (clientY - rect.top) * scaleY;
 
         const c = Math.floor(x / this.CELL_SIZE);
         const r = Math.floor(y / this.CELL_SIZE);
 
         if (r >= 0 && r < this.GRID_SIZE && c >= 0 && c < this.GRID_SIZE) {
-            if (e.button === 2) { 
-                // Right Click
+            // Determine action based on Mode or Right Click
+            const isFlagAction = isRightClick || (this.inputMode === 'FLAG');
+
+            if (isFlagAction) {
                 this.toggleFlag(r, c);
             } else {
-                // Left Click
                 this.revealCell(r, c);
             }
         }
@@ -308,18 +389,16 @@ class GameEngine {
         this.flagsPlaced += cell.flagged ? 1 : -1;
         this.updateStats();
         
-        // Narrative Flavor
-        if (cell.flagged) {
-            this.updateDialogue("Terry", "Adding this to the safety log...");
+        // Random Flavor text
+        if (cell.flagged && Math.random() > 0.8) {
+            this.updateDialogue("Terry", "That looks like a HR violation.");
         }
     }
 
     revealCell(r, c) {
         const cell = this.grid[r][c];
-        
         if (cell.revealed || cell.flagged) return;
 
-        // First click safety mechanism
         if (this.firstClick) {
             this.placeMines(r, c);
             this.firstClick = false;
@@ -340,8 +419,7 @@ class GameEngine {
     floodFill(r, c) {
         for (let i = -1; i <= 1; i++) {
             for (let j = -1; j <= 1; j++) {
-                let nr = r + i;
-                let nc = c + j;
+                let nr = r + i, nc = c + j;
                 if (nr >= 0 && nr < this.GRID_SIZE && nc >= 0 && nc < this.GRID_SIZE) {
                     let neighbor = this.grid[nr][nc];
                     if (!neighbor.revealed && !neighbor.flagged) {
@@ -352,7 +430,54 @@ class GameEngine {
         }
     }
 
-    // --- RENDERING ---
+    // --- LOGIC & ENDGAME ---
+
+    checkWinCondition() {
+        let safeCellsUnrevealed = 0;
+        for (let r = 0; r < this.GRID_SIZE; r++) {
+            for (let c = 0; c < this.GRID_SIZE; c++) {
+                if (!this.grid[r][c].isMine && !this.grid[r][c].revealed) {
+                    safeCellsUnrevealed++;
+                }
+            }
+        }
+
+        if (safeCellsUnrevealed === 0) {
+            this.handleLevelWin();
+        }
+    }
+
+    handleLevelWin() {
+        // Flag all mines for visual clarity
+        this.grid.flat().forEach(cell => { if(cell.isMine) cell.flagged = true; });
+        this.updateStats();
+
+        if (this.currentLevelIdx < this.levels.length - 1) {
+            this.gameState = 'LEVEL_COMPLETE';
+            this.updateDialogue("SYSTEM", `LEVEL COMPLETE. Performance: Adequate. Click to proceed to ${this.levels[this.currentLevelIdx+1].name}.`);
+            this.draw();
+        } else {
+            this.triggerGameOver(true);
+        }
+    }
+
+    triggerGameOver(win) {
+        if (win) {
+            this.gameState = 'VICTORY';
+            this.updateDialogue("Terry", "It's done. I'm going home.");
+            setTimeout(() => this.updateDialogue("Zeke", "My mothership! It's ruined!"), 1500);
+            setTimeout(() => this.updateDialogue("SYSTEM", "THREAT NEUTRALIZED. PIZZA PARTY AUTHORIZED."), 3000);
+            this.startConfetti();
+        } else {
+            this.gameState = 'GAMEOVER';
+            // Reveal mines
+            this.grid.flat().forEach(cell => { if(cell.isMine) cell.revealed = true; });
+            this.draw();
+            this.updateDialogue("Zeke", "BOOM! Back to the mailroom, Terry!");
+        }
+    }
+
+    // --- VISUALS ---
 
     draw() {
         if (this.gameState === 'INTRO') {
@@ -360,15 +485,91 @@ class GameEngine {
             return;
         }
 
-        // Clear screen
+        // Clear
         this.ctx.fillStyle = "#c0c0c0";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Draw Grid
         for (let r = 0; r < this.GRID_SIZE; r++) {
             for (let c = 0; c < this.GRID_SIZE; c++) {
                 this.drawCell(r, c);
             }
         }
+
+        // Overlay for Level Complete
+        if (this.gameState === 'LEVEL_COMPLETE') {
+            this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.drawText("LEVEL COMPLETE", this.canvas.width/2, this.canvas.height/2, "white", "bold 40px Courier New");
+            this.drawText("Tap to Continue", this.canvas.width/2, this.canvas.height/2 + 50, "white", "20px Courier New");
+        }
+    }
+
+    drawCell(r, c) {
+        const cell = this.grid[r][c];
+        const x = c * this.CELL_SIZE;
+        const y = r * this.CELL_SIZE;
+        const s = this.CELL_SIZE;
+
+        if (!cell.revealed) {
+            this.drawBevel(x, y, s, true);
+            if (cell.flagged) {
+                // Determine text size based on cell size
+                const fontSize = Math.floor(s * 0.6);
+                this.drawText("🚩", x + s/2, y + s/1.5, "black", `${fontSize}px Arial`);
+            }
+        } else {
+            this.ctx.strokeStyle = "#808080";
+            this.ctx.strokeRect(x, y, s, s);
+            
+            if (cell.isMine) {
+                if (this.gameState === 'GAMEOVER') this.ctx.fillStyle = "red";
+                else this.ctx.fillStyle = "#c0c0c0";
+                
+                this.ctx.fillRect(x+1, y+1, s-2, s-2);
+                const fontSize = Math.floor(s * 0.6);
+                this.drawText("💣", x + s/2, y + s/1.5, "black", `${fontSize}px Arial`);
+            } else if (cell.neighborCount > 0) {
+                const fontSize = Math.floor(s * 0.8);
+                this.drawText(
+                    cell.neighborCount, 
+                    x + s/2, 
+                    y + s/1.3, 
+                    this.colors[cell.neighborCount],
+                    `bold ${fontSize}px Courier New`
+                );
+            }
+        }
+    }
+
+    drawBevel(x, y, size, raised) {
+        const light = "#ffffff";
+        const shadow = "#808080";
+        const face = "#c0c0c0";
+
+        this.ctx.fillStyle = face;
+        this.ctx.fillRect(x, y, size, size);
+
+        // Simple Bevel
+        const b = Math.floor(size * 0.1); // Bevel thickness
+        
+        this.ctx.fillStyle = raised ? light : shadow;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y);
+        this.ctx.lineTo(x + size, y);
+        this.ctx.lineTo(x, y + size);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = raised ? shadow : light;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + size, y + size);
+        this.ctx.lineTo(x + size, y);
+        this.ctx.lineTo(x, y + size);
+        this.ctx.fill();
+
+        // Inner Face
+        this.ctx.fillStyle = face;
+        this.ctx.fillRect(x + b, y + b, size - (2*b), size - (2*b));
     }
 
     drawIntro() {
@@ -376,24 +577,35 @@ class GameEngine {
         this.ctx.fillStyle = "#c0c0c0";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Centering logic for the memo (400x420)
+        const memoW = 400;
+        const memoH = 420;
+        const startX = (this.canvas.width - memoW) / 2;
+        const startY = (this.canvas.height - memoH) / 2;
+
+        // Drop shadow for the paper
+        this.ctx.fillStyle = "rgba(0,0,0,0.5)";
+        this.ctx.fillRect(startX + 8, startY + 8, memoW, memoH);
+
         // Draw a "White Paper" or "Memo" in the middle
         this.ctx.fillStyle = "#ffffff";
-        this.ctx.fillRect(40, 40, 320, 320);
+        this.ctx.fillRect(startX, startY, memoW, memoH);
         this.ctx.strokeStyle = "#808080";
-        this.ctx.strokeRect(40, 40, 320, 320);
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(startX, startY, memoW, memoH);
 
         // Header Blue bar
         this.ctx.fillStyle = "#000080";
-        this.ctx.fillRect(40, 40, 320, 30);
+        this.ctx.fillRect(startX, startY, memoW, 40);
         
         this.ctx.fillStyle = "#ffffff";
-        this.ctx.font = "bold 14px Courier New";
+        this.ctx.font = "bold 18px Courier New";
         this.ctx.textAlign = "left";
-        this.ctx.fillText("INCOMING TRANSMISSION", 50, 60);
+        this.ctx.fillText("INCOMING TRANSMISSION", startX + 15, startY + 26);
 
         // Text Content
         this.ctx.fillStyle = "black";
-        this.ctx.font = "12px Courier New"; // Smaller font for the memo
+        this.ctx.font = "14px Courier New"; 
         
         let lines = [
             "FROM: HUMAN RESOURCES",
@@ -411,125 +623,21 @@ class GameEngine {
             "",
             "NOTE: Hazard Pay is DENIED.",
             "",
-            "[CLICK TO START]"
+            "[CLICK OR TAP TO START]"
         ];
 
-        let startY = 90;
-        let lineHeight = 16;
-        for (let i = 0; i < lines.length; i++) {
-            this.ctx.fillText(lines[i], 50, startY + (i * lineHeight));
-        }
+        let currentY = startY + 70;
+        lines.forEach(line => {
+            this.ctx.fillText(line, startX + 20, currentY);
+            currentY += 20;
+        });
     }
 
-    drawCell(r, c) {
-        const cell = this.grid[r][c];
-        const x = c * this.CELL_SIZE;
-        const y = r * this.CELL_SIZE;
-        const s = this.CELL_SIZE;
-
-        if (!cell.revealed) {
-            this.drawBevel(x, y, s, true);
-            if (cell.flagged) {
-                this.drawText("🚩", x + s/2, y + s/1.5);
-            }
-        } else {
-            this.ctx.strokeStyle = "#808080";
-            this.ctx.strokeRect(x, y, s, s);
-            
-            if (cell.isMine) {
-                if (this.gameState === 'GAMEOVER') this.ctx.fillStyle = "red";
-                else this.ctx.fillStyle = "#c0c0c0";
-                
-                this.ctx.fillRect(x+1, y+1, s-2, s-2);
-                this.drawText("💣", x + s/2, y + s/1.5);
-            } else if (cell.neighborCount > 0) {
-                this.drawText(
-                    cell.neighborCount, 
-                    x + s/2, 
-                    y + s/1.5, 
-                    this.colors[cell.neighborCount],
-                    "bold 24px Courier New"
-                );
-            }
-        }
-    }
-
-    drawBevel(x, y, size, raised) {
-        const light = "#ffffff";
-        const shadow = "#808080";
-        const face = "#c0c0c0";
-
-        this.ctx.fillStyle = face;
-        this.ctx.fillRect(x, y, size, size);
-
-        // Top/Left Highlight
-        this.ctx.fillStyle = raised ? light : shadow;
-        this.ctx.beginPath();
-        this.ctx.moveTo(x, y);
-        this.ctx.lineTo(x + size, y);
-        this.ctx.lineTo(x + size - 4, y + 4);
-        this.ctx.lineTo(x + 4, y + 4);
-        this.ctx.lineTo(x + 4, y + size - 4);
-        this.ctx.lineTo(x, y + size);
-        this.ctx.fill();
-
-        // Bottom/Right Shadow
-        this.ctx.fillStyle = raised ? shadow : light;
-        this.ctx.beginPath();
-        this.ctx.moveTo(x + size, y + size);
-        this.ctx.lineTo(x, y + size);
-        this.ctx.lineTo(x + 4, y + size - 4);
-        this.ctx.lineTo(x + size - 4, y + size - 4);
-        this.ctx.lineTo(x + size - 4, y + 4);
-        this.ctx.lineTo(x + size, y);
-        this.ctx.fill();
-    }
-
-    drawText(text, x, y, color = "black", font = "24px Arial") {
+    drawText(text, x, y, color, font) {
         this.ctx.fillStyle = color;
         this.ctx.font = font;
         this.ctx.textAlign = "center";
         this.ctx.fillText(text, x, y);
-    }
-
-    // --- GAME LOGIC & NARRATIVE ---
-
-    checkWinCondition() {
-        let safeCellsUnrevealed = 0;
-        for (let r = 0; r < this.GRID_SIZE; r++) {
-            for (let c = 0; c < this.GRID_SIZE; c++) {
-                if (!this.grid[r][c].isMine && !this.grid[r][c].revealed) {
-                    safeCellsUnrevealed++;
-                }
-            }
-        }
-
-        if (safeCellsUnrevealed === 0) {
-            this.triggerGameOver(true);
-        }
-    }
-
-    triggerGameOver(win) {
-        this.gameState = 'GAMEOVER';
-        
-        // Reveal all mines
-        for (let r = 0; r < this.GRID_SIZE; r++) {
-            for (let c = 0; c < this.GRID_SIZE; c++) {
-                if (this.grid[r][c].isMine) {
-                    this.grid[r][c].revealed = true;
-                }
-            }
-        }
-        this.draw();
-
-        if (win) {
-            this.updateDialogue("Terry", "Grid clear. I'm taking my 15-minute break now.");
-            setTimeout(() => this.updateDialogue("Zeke", "Curse you! I'll tell my mom!"), 2000);
-            setTimeout(() => this.updateDialogue("SYSTEM", "CONGRATULATIONS. World saved. Performance Rating: 'Satisfactory'. Please return to your cubicle."), 4500);
-        } else {
-            this.updateDialogue("Zeke", "BOOM! Human error detected! Earth is cancelled!");
-            setTimeout(() => this.updateDialogue("Terry", "Great. That's coming out of my paycheck."), 2000);
-        }
     }
 
     updateStats() {
@@ -541,16 +649,56 @@ class GameEngine {
         if (speaker === "Zeke") cssClass = "speaker-zeke";
         else if (speaker === "Terry") cssClass = "speaker-terry";
         else cssClass = "speaker-sys";
-        
         this.dialogueEl.innerHTML = `<span class="${cssClass}">${speaker}:</span> "${text}"`;
+        this.dialogueEl.scrollTop = this.dialogueEl.scrollHeight;
     }
 
     reset() {
-        this.startGame();
+        this.startIntro();
+    }
+
+    // --- CONFETTI SYSTEM ---
+
+    startConfetti() {
+        this.confettiParticles = [];
+        for (let i = 0; i < 150; i++) {
+            this.confettiParticles.push({
+                x: this.canvas.width / 2,
+                y: this.canvas.height / 2,
+                vx: (Math.random() - 0.5) * 15,
+                vy: (Math.random() - 0.5) * 15 - 5, // Upward bias
+                size: Math.random() * 8 + 4,
+                color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                drag: 0.96,
+                gravity: 0.2
+            });
+        }
+        this.animateConfetti();
+    }
+
+    animateConfetti() {
+        if (this.gameState !== 'VICTORY') return;
+
+        // Draw Game first
+        this.draw(); 
+
+        // Draw Confetti
+        this.confettiParticles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += p.gravity;
+            p.vx *= p.drag;
+
+            this.ctx.fillStyle = p.color;
+            this.ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+
+        // Loop
+        this.animationFrameId = requestAnimationFrame(() => this.animateConfetti());
     }
 }
 
-// Instantiate Global Game Instance
+// Instantiate
 const game = new GameEngine();
 
 </script>
