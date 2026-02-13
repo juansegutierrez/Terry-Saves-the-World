@@ -525,6 +525,7 @@ class GameEngine {
         if (win) {
             this.updateDialogue("Terry", "Grid clear. I'm taking my 15-minute break now.");
             setTimeout(() => this.updateDialogue("Zeke", "Curse you! I'll tell my mom!"), 2000);
+            setTimeout(() => this.updateDialogue("SYSTEM", "CONGRATULATIONS. World saved. Performance Rating: 'Satisfactory'. Please return to your cubicle."), 4500);
         } else {
             this.updateDialogue("Zeke", "BOOM! Human error detected! Earth is cancelled!");
             setTimeout(() => this.updateDialogue("Terry", "Great. That's coming out of my paycheck."), 2000);
